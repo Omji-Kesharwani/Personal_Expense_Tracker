@@ -38,7 +38,7 @@ export const DropdownMenu = ({ children, open, onOpenChange }: DropdownMenuProps
   const [internalOpen, setInternalOpen] = React.useState(false)
   const isControlled = open !== undefined
   const isOpen = isControlled ? open : internalOpen
-  const setIsOpen = isControlled ? onOpenChange : setInternalOpen
+  const setIsOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen
 
   return (
     <DropdownMenuContext.Provider value={{ open: isOpen, setOpen: setIsOpen }}>
