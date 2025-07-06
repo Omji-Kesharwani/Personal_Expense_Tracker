@@ -1,4 +1,4 @@
-import express from "express"
+import express, { Request, Response } from "express"
 import { 
   createTransaction, 
   deleteTransaction, 
@@ -58,7 +58,7 @@ router.get("/charts/category-pie", getCategoryPieChart);
  * @access  Public
  * @returns {Object} Financial summary with totals, averages, and recommendations
  */
-router.get("/summary", async (req, res) => {
+router.get("/summary", async (req: Request, res: Response) => {
   try {
     // This endpoint can be implemented to return just the financial summary
     // For now, we'll redirect to the main endpoint with limit=0 to get summary only
@@ -77,7 +77,7 @@ router.get("/summary", async (req, res) => {
  * @access  Public
  * @returns {Object} Category breakdown with totals and percentages
  */
-router.get("/categories", async (req, res) => {
+router.get("/categories", async (req: Request, res: Response) => {
   try {
     // This endpoint can be implemented to return just category analysis
     // For now, we'll redirect to the main endpoint
@@ -132,7 +132,7 @@ router.delete("/:id", deleteTransaction);
  * @access  Public
  * @returns {Object} API health status
  */
-router.get("/health", (req, res) => {
+router.get("/health", (req: Request, res: Response) => {
   res.json({
     success: true,
     message: "Transactions API is healthy",
@@ -159,7 +159,7 @@ router.get("/health", (req, res) => {
  * @body    {number} count - Number of transactions to generate (default: 20)
  * @returns {Object} Seeding results and summary
  */
-router.post("/seed", async (req, res) => {
+router.post("/seed", async (req: Request, res: Response) => {
   try {
     // Only allow in development
     if (process.env.NODE_ENV === "production") {

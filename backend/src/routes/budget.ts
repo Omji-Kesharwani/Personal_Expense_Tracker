@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import { 
   getBudgets, 
   createBudget, 
@@ -66,7 +66,7 @@ router.delete("/:id", deleteBudget);
  * @access  Public
  * @returns {Object} API health status
  */
-router.get("/health", (req, res) => {
+router.get("/health", (req: Request, res: Response) => {
   res.json({
     success: true,
     message: "Budgets API is healthy",
