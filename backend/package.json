@@ -1,0 +1,40 @@
+{
+  "dependencies": {
+    "@hookform/resolvers": "^5.1.1",
+    "concurrently": "^9.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "mongoose": "^8.16.1",
+    "react-hook-form": "^7.60.0",
+    "zod": "^3.25.74"
+  },
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^4.17.23",
+    "@types/node": "^20.10.0",
+    "nodemon": "^3.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "concurrently \"tsc -w\" \"nodemon dist/index.js\"",
+    "seed:data": "ts-node src/scripts/seed.ts seed",
+    "add:data": "ts-node src/scripts/seed.ts add",
+    "seed:100": "ts-node src/scripts/seed.ts seed 100",
+    "seed:50": "ts-node src/scripts/seed.ts seed 50",
+    "add:20": "ts-node src/scripts/seed.ts add 20"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Personal App Visualizer Backend API"
+}
