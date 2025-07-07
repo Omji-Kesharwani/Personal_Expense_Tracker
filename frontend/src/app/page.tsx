@@ -30,8 +30,6 @@ export default async function DashboardPage() {
           <DashboardClient.MainContent />
         </Suspense>
       </main>
-      {/* Add Transaction Modal handled in client component */}
-      <DashboardClient.AddTransactionModal />
     </div>
   )
 }
