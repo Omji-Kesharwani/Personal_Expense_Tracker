@@ -2,13 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Plus,
-  BarChart3,
-  PieChart,
-  Calendar,
-  AlertCircle
-} from 'lucide-react'
+import { Plus, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import TransactionsPage from '@/components/TransactionsPage'
@@ -22,10 +16,32 @@ import { useCurrencyContext } from '@/contexts/CurrencyContext'
 
 // Tab options
 const TABS = [
-  { id: 'overview', label: 'Overview', icon: BarChart3 },
-  { id: 'transactions', label: 'Transactions', icon: Calendar },
-  { id: 'analytics', label: 'Analytics', icon: PieChart }
+  { id: 'overview', label: 'Overview', icon: '📊' },
+  { id: 'transactions', label: 'Transactions', icon: '📅' },
+  { id: 'analytics', label: 'Analytics', icon: '📈' }
 ]
+
+// Header actions: currency selector and add transaction button
+export function HeaderActions() {
+  const { currency, setCurrency } = useCurrencyContext()
+  const [showAddModal, setShowAddModal] = useState(false)
+
+  return (
+    <div className="flex items-center gap-4">
+      <CurrencySelector 
+        selectedCurrency={currency}
+        onCurrencyChange={setCurrency}
+      />
+      <Button 
+        onClick={() => setShowAddModal(true)}
+        className="bg-primary hover:bg-primary/90"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add Transaction
+      </Button>
+    </div>
+  )
+}
 
 // Main dashboard client logic
 export function MainContent() {
@@ -57,7 +73,6 @@ export function MainContent() {
     setShowAddModal(false)
   }
 
-  // Provide context for other components
   return (
     <>
       {loading ? (
@@ -142,33 +157,6 @@ export function MainContent() {
   )
 }
 
-// Header actions: currency selector and add transaction button
-export function HeaderActions() {
-  const { currency, setCurrency } = useCurrencyContext()
-  const [showAddModal, setShowAddModal] = useState(false)
-
-  return (
-    <div className="flex items-center gap-4">
-      <CurrencySelector 
-        selectedCurrency={currency}
-        onCurrencyChange={setCurrency}
-      />
-      <Button 
-        onClick={() => setShowAddModal(true)}
-        className="bg-primary hover:bg-primary/90"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add Transaction
-      </Button>
-      <AddTransactionModal 
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onTransactionAdded={() => {}}
-      />
-    </div>
-  )
-}
-
 // Navigation tabs
 export function NavTabs({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) {
   return (
@@ -183,7 +171,7 @@ export function NavTabs({ activeTab, setActiveTab }: { activeTab: string, setAct
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
-          <tab.icon className="w-4 h-4" />
+          <span>{tab.icon}</span>
           <span>{tab.label}</span>
         </button>
       ))}
