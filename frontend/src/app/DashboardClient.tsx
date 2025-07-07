@@ -24,24 +24,15 @@ const TABS = [
   { id: 'analytics', label: 'Analytics', icon: '📈' }
 ]
 
-// Header actions: currency selector and add transaction button
+// Header actions: currency selector only
 export function HeaderActions() {
   const { currency, setCurrency } = useCurrencyContext()
-  const [showAddModal, setShowAddModal] = useState(false)
-
   return (
     <div className="flex items-center gap-4">
       <CurrencySelector 
         selectedCurrency={currency}
         onCurrencyChange={setCurrency}
       />
-      <Button 
-        onClick={() => setShowAddModal(true)}
-        className="bg-primary hover:bg-primary/90"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add Transaction
-      </Button>
     </div>
   )
 }
@@ -119,7 +110,16 @@ export function MainContent({ initialDashboardData }: { initialDashboardData: im
 
   return (
     <>
-      <NavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="flex items-center justify-between mb-4">
+        <NavTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Button 
+          onClick={() => setShowAddModal(true)}
+          className="bg-primary hover:bg-primary/90"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Transaction
+        </Button>
+      </div>
       {activeTab === 'overview' && (
         <motion.div
           initial={{ opacity: 0 }}
