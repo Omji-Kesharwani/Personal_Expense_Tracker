@@ -7,62 +7,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import TransactionList from './TransactionList'
 import { apiService, type Transaction } from '@/lib/api'
+import useSWR from 'swr'
 
 interface TransactionsPageProps {
   onTransactionUpdated?: () => void
 }
 
 const TransactionsPage = ({ onTransactionUpdated }: TransactionsPageProps) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
-
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await apiService.getTransactions()
-      setTransactions(response.data.transactions)
-    } catch (error) {
-      console.error('Error fetching transactions:', error)
-      setError('Failed to load transactions. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+  // SWR fetcher
+  const fetcher = async () => {
+    const response = await apiService.getTransactions()
+    return response.data.transactions
   }
 
+  const { data: transactions, error, isLoading, mutate } = useSWR('transactions', fetcher, { revalidateOnFocus: true })
+
   const handleTransactionUpdated = () => {
-    fetchTransactions()
-    // Also notify the parent component to refresh dashboard data
+    mutate()
     onTransactionUpdated?.()
   }
 
-  // Listen for custom events to refresh when transactions are added or updated
-  useEffect(() => {
-    const handleTransactionAdded = () => {
-      fetchTransactions()
-      onTransactionUpdated?.()
-    }
-
-    const handleTransactionUpdated = () => {
-      fetchTransactions()
-      onTransactionUpdated?.()
-    }
-
-    window.addEventListener('transaction-added', handleTransactionAdded)
-    window.addEventListener('transaction-updated', handleTransactionUpdated)
-    return () => {
-      window.removeEventListener('transaction-added', handleTransactionAdded)
-      window.removeEventListener('transaction-updated', handleTransactionUpdated)
-    }
-  }, [onTransactionUpdated])
-
-  useEffect(() => {
-    fetchTransactions()
-  }, [])
-
-  if (loading) {
+  if (isLoading && !transactions) {
     return (
       <div className="flex items-center justify-center py-12">
         <motion.div
@@ -91,10 +56,10 @@ const TransactionsPage = ({ onTransactionUpdated }: TransactionsPageProps) => {
                 <AlertCircle className="w-12 h-12 text-red-500" />
               </div>
               <CardTitle>Error Loading Transactions</CardTitle>
-              <CardDescription>{error}</CardDescription>
+              <CardDescription>Failed to load transactions. Please try again.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={fetchTransactions} className="w-full">
+              <Button onClick={() => mutate()} className="w-full">
                 Try Again
               </Button>
             </CardContent>
@@ -111,7 +76,7 @@ const TransactionsPage = ({ onTransactionUpdated }: TransactionsPageProps) => {
       transition={{ delay: 0.2 }}
     >
       <TransactionList 
-        transactions={transactions}
+        transactions={transactions || []}
         onTransactionUpdated={handleTransactionUpdated}
       />
     </motion.div>

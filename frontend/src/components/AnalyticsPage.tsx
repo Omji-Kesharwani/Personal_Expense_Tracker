@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
   TrendingUp, 
@@ -16,53 +16,43 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  PieChart as RechartsPieChart, 
-  Pie, 
+import { apiService, type Transaction, type DashboardData } from '@/lib/api'
+import { useCurrencyContext } from '@/contexts/CurrencyContext'
+import useSWR from 'swr'
+import dynamic from 'next/dynamic'
+// Revert to static imports for recharts primitives
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
   Cell,
   LineChart,
   Line,
   AreaChart,
   Area
 } from 'recharts'
-import { apiService, type Transaction, type DashboardData } from '@/lib/api'
-import { useCurrencyContext } from '@/contexts/CurrencyContext'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B6B', '#4ECDC4', '#45B7D1']
 
 const AnalyticsPage = () => {
   const { format } = useCurrencyContext()
-  const [analyticsData, setAnalyticsData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState<'6m' | '1y' | 'all'>('6m')
 
-  const fetchAnalyticsData = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await apiService.getDashboardData()
-      setAnalyticsData(response.data)
-    } catch (error) {
-      console.error('Error fetching analytics data:', error)
-      setError('Failed to load analytics data. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+  // SWR fetcher
+  const fetcher = async () => {
+    const response = await apiService.getDashboardData()
+    return response.data
   }
 
-  useEffect(() => {
-    fetchAnalyticsData()
-  }, [])
+  const { data: analyticsData, error, isLoading, mutate } = useSWR('analytics-dashboard', fetcher, { revalidateOnFocus: true })
 
-  if (loading) {
+  if (isLoading && !analyticsData) {
     return (
       <div className="flex items-center justify-center py-12">
         <motion.div
@@ -94,7 +84,7 @@ const AnalyticsPage = () => {
               <CardDescription>{error || 'Unable to load analytics data'}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={fetchAnalyticsData} className="w-full">
+              <Button onClick={() => mutate()} className="w-full">
                 Try Again
               </Button>
             </CardContent>
