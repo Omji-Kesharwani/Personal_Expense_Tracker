@@ -41,22 +41,61 @@ export function HeaderActions() {
 export function MainContent({ initialDashboardData }: { initialDashboardData: import('@/lib/api').DashboardData | null }) {
   const [activeTab, setActiveTab] = useState('overview')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [errorDetails, setErrorDetails] = useState<{ status?: number; message?: string; type?: string }>({})
   const { currency, setCurrency } = useCurrencyContext()
 
-  // SWR fetcher
+  // SWR fetcher with improved error handling
   const fetcher = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transactions/dashboard`, {
-      headers: { 'Content-Type': 'application/json' },
-    })
-    if (!res.ok) throw new Error('Failed to fetch dashboard data')
-    const json = await res.json()
-    return json.data
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transactions/dashboard`, {
+        headers: { 'Content-Type': 'application/json' },
+      })
+      
+      if (!res.ok) {
+        let errorMessage = `Server error: ${res.status} ${res.statusText}`
+        try {
+          const errorData = await res.json()
+          errorMessage = errorData.message || errorData.error || errorMessage
+        } catch {
+          // If response is not JSON, use the status text
+        }
+        
+        const error = new Error(errorMessage) as any
+        error.status = res.status
+        error.type = res.status >= 500 ? 'server' : res.status >= 400 ? 'client' : 'network'
+        throw error
+      }
+      
+      const json = await res.json()
+      return json.data
+    } catch (error: any) {
+      // Handle network errors (server not running, CORS, etc.)
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        const networkError = new Error('Cannot connect to server. Please check if the backend is running on localhost:5000') as any
+        networkError.type = 'network'
+        networkError.status = 0
+        throw networkError
+      }
+      
+      // Re-throw other errors with their details
+      throw error
+    }
   }
 
   const { data: dashboardData, error, isLoading, mutate } = useSWR(
     [`dashboardData`, currency],
     fetcher,
-    { fallbackData: initialDashboardData, revalidateOnFocus: true }
+    { 
+      fallbackData: initialDashboardData, 
+      revalidateOnFocus: true,
+      onError: (err: any) => {
+        setErrorDetails({
+          status: err.status,
+          message: err.message,
+          type: err.type
+        })
+      }
+    }
   )
 
   const handleTransactionAdded = () => {
@@ -80,6 +119,32 @@ export function MainContent({ initialDashboardData }: { initialDashboardData: im
   }
 
   if (error || !dashboardData) {
+    const getErrorTitle = () => {
+      if (errorDetails.type === 'network') return 'Connection Error'
+      if (errorDetails.status && errorDetails.status >= 500) return 'Server Error'
+      if (errorDetails.status && errorDetails.status >= 400) return 'Client Error'
+      return 'Connection Error'
+    }
+
+    const getErrorDescription = () => {
+      if (errorDetails.type === 'network') {
+        return 'Unable to connect to the backend server. Please make sure the backend is running on localhost:5000.'
+      }
+      if (errorDetails.status && errorDetails.status >= 500) {
+        return `Server error (${errorDetails.status}): ${errorDetails.message || 'Internal server error occurred'}`
+      }
+      if (errorDetails.status && errorDetails.status >= 400) {
+        return `Client error (${errorDetails.status}): ${errorDetails.message || 'Bad request'}`
+      }
+      return errorDetails.message || 'An unexpected error occurred while fetching data.'
+    }
+
+    const getErrorColor = () => {
+      if (errorDetails.status && errorDetails.status >= 500) return 'text-red-600'
+      if (errorDetails.status && errorDetails.status >= 400) return 'text-orange-600'
+      return 'text-red-500'
+    }
+
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <motion.div
@@ -90,14 +155,19 @@ export function MainContent({ initialDashboardData }: { initialDashboardData: im
           <Card className="max-w-md">
             <CardHeader>
               <div className="mx-auto mb-4">
-                <AlertCircle className="w-12 h-12 text-red-500" />
+                <AlertCircle className={`w-12 h-12 ${getErrorColor()}`} />
               </div>
-              <CardTitle>Connection Error</CardTitle>
+              <CardTitle>{getErrorTitle()}</CardTitle>
               <CardDescription>
-                Unable to connect to the backend server. Please make sure the backend is running on port 5000.
+                {getErrorDescription()}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {errorDetails.status && (
+                <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                  <strong>Status Code:</strong> {errorDetails.status}
+                </div>
+              )}
               <Button onClick={() => mutate()} className="w-full">
                 Try Again
               </Button>
